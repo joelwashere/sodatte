@@ -1,0 +1,3 @@
+assets = [
+    { kind = "crypto", symbol = "BTC", quantity = 1.0 }
+]
