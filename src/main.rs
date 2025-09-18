@@ -5,6 +5,7 @@ use tokio::{task, time};
 use reqwest::Client;
 use ratatui::{prelude::*, backend::CrosstermBackend, widgets::{Block, Borders, Row, Table}};
 use crossterm::{execute, event, terminal};
+use dotenvy::dotenv;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -37,7 +38,7 @@ async fn load_config(path: &str) -> Result<Vec<AssetConfig>> {
 }
 
 async fn fetch_price(client: &Client, a: &AssetConfig) -> Result<f64> {
-    const API_KEY: &str = "0ac51e33-41f2-414a-90c4-3301efbbce7c";
+    let api_key = dotenvy::var("CMC_API_KEY")?;
     let url = if let Some(custom) = &a.api {
         custom.clone()
     } else {
@@ -46,7 +47,7 @@ async fn fetch_price(client: &Client, a: &AssetConfig) -> Result<f64> {
             AssetType::Crypto => format!(
                 "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol={symbol}&CMC_PRO_API_KEY={key}",
                 symbol = a.symbol,
-                key = API_KEY
+                key = api_key
             ),
             AssetType::Commodity => format!("https://example.com/commodity/{}", a.symbol),
         }
@@ -154,6 +155,9 @@ fn draw_ui(f: &mut Frame, rows: &[(AssetConfig, f64)]) {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+
+    dotenvy::dotenv()?;
+
     let cfg = load_config("portfolio.toml").await?;
     let client = Client::builder().user_agent("sodatte/0.1").build()?;
 
